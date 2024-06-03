@@ -12,13 +12,13 @@ const HomePage = () => {
   const [input, setInput] = useState("");
   const [theme, setTheme] = useState("light");
   const navigate = useNavigate();
-  const { user } = useAuth();
+  // const { user } = useAuth();
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/authenticate");
-    }
-  }, [])
+  // useEffect(() => {
+  //   if (!user) {
+  //     navigate("/authenticate");
+  //   }
+  // }, [])
 
   const submitHandler = () => {
     if (input.trim()) {

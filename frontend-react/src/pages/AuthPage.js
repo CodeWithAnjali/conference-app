@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { GoogleButton } from "../components/GoogleButton";
-import { authenticateUser, useAuth } from "../contexts/AuthContext";
+// import { GoogleButton } from "../components/GoogleButton";
+import {  useAuth } from "../contexts/AuthContext";
 import { useEffect } from "react";
 
 export default function AuthenticatePage() {
@@ -11,11 +11,11 @@ export default function AuthenticatePage() {
 		if (user) {
 			navigate("/");
 		}
-	}, [user]);
+	}, [user, navigate]);
  
 	return (
 		<div>
-			<GoogleButton title="SignIn With Google" handle={() => authenticateUser()} />
+			{/* <GoogleButton title="SignIn With Google" handle={() => authenticateUser()} /> */}
 		</div>
 	)
 }
