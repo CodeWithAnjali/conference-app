@@ -1,0 +1,21 @@
+import { useNavigate } from "react-router-dom";
+import { GoogleButton } from "../components/GoogleButton";
+import { authenticateUser, useAuth } from "../contexts/AuthContext";
+import { useEffect } from "react";
+
+export default function AuthenticatePage() {
+	const {user} = useAuth();
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (user) {
+			navigate("/");
+		}
+	}, [user]);
+ 
+	return (
+		<div>
+			<GoogleButton title="SignIn With Google" handle={() => authenticateUser()} />
+		</div>
+	)
+}

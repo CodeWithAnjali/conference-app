@@ -1,0 +1,3 @@
+interface UseRecordingContext {
+    what: string
+}

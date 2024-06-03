@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./HomePage.css";
 import { useNavigate } from "react-router-dom";
 import linkedinIcon from "../components/icon/linkedin2.png";
@@ -6,11 +6,19 @@ import instagramIcon from "../components/icon/instagram.png";
 import twitterIcon from "../components/icon/twitter.png";
 import lightIcon from "../components/icon/lighttt.png";
 import darkIcon from "../components/icon/dark.png";
+import { useAuth } from "../contexts/AuthContext";
 
 const HomePage = () => {
   const [input, setInput] = useState("");
   const [theme, setTheme] = useState("light");
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/authenticate");
+    }
+  }, [])
 
   const submitHandler = () => {
     if (input.trim()) {
