@@ -3,6 +3,8 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import VideoPage from "./pages/VideoPage";
 import AuthenticatePage from "./pages/AuthPage";
+import { AuthProvider } from "./contexts/AuthContext";
+import { SocketProvider } from "./contexts/SocketContext";
 
 function App() {
   const router = createBrowserRouter([
@@ -21,9 +23,13 @@ function App() {
   ]);
 
   return (
-    <div className="App">
-      <RouterProvider router={router} />
-    </div>
+    <AuthProvider>
+      <SocketProvider>
+        <div className="App">
+          <RouterProvider router={router} />
+        </div>
+      </SocketProvider>
+    </AuthProvider>
   );
 }
 
