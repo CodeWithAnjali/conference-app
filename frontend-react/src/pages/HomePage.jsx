@@ -15,12 +15,11 @@ const HomePage = () => {
   const { loaded, user } = useAuth();
 
   useEffect(() => {
-    console.log({loaded, user})
-
+    console.log(loaded, user)
     if (loaded && !user) {
       navigate("/authenticate");
-    }
-  }, [user, navigate])
+    } 
+  }, [user, loaded, navigate])
 
   const submitHandler = () => {
     if (input.trim()) {

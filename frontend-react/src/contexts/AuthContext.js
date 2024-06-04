@@ -2,9 +2,10 @@ import { GoogleAuthProvider, onAuthStateChanged, signInWithRedirect } from "fire
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, firestore } from "../firebase.config";
 import { collection, doc, getDocs, query, setDoc, where } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 /**
- * @typedef { React.Context<{ user: import("firebase/auth").User | null, loaded: boolean }> } AuthContextObject
+ * @typedef { React.Context<{ user: import("firebase/auth").User | null, loaded: boolean, IsLoggedIn: () => Promise<import("../types").IsLoggedInFunctionResult> }> } AuthContextObject
  */
 
 /**
@@ -73,32 +74,72 @@ export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
     const [loaded, setLoaded] = useState(false);
 
-    useEffect(() => {
-        console.log(auth.currentUser)
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                checkUserExist(user.uid)
-                .then((result) => {
-                    if (!result) {
-                        console.log("User doesn't exists saving");
-                        saveUser(user);
-                    }
-                });
-                setCurrentUser(user);
-            }
+    /**
+     * 
+     * @returns {Promise<import("../types").IsLoggedInFunctionResult>}
+     */
+    async function IsLoggedIn() {
+        try {
+          const user = await new Promise((resolve, reject) =>
+            auth.onAuthStateChanged(
+              user => {
+                if (user) {
+                  resolve(user)
+                } else {
+                  reject(null);
+                }
+              },
+              error => reject(error)
+            )
+          )
+          setCurrentUser(user);
+          setLoaded(true);
+          return { user, result: true }
+        } catch (error) {
             setLoaded(true);
-        });
+            return {user: null, result: false }
+        }
+    }
 
-        return () => {
-            unsubscribe();
-        };
-    }, []);
+    useEffect(() => {
+        IsLoggedIn().then(({ result, user}) => {
+            if (result) {
+                console.log("User is logged In")
+                setCurrentUser(user);
+            } else {
+                console.log("User isn't logged in");                
+                setCurrentUser(null);
+            }
+        }).catch((err) => {
+            console.log(err);
+        })
+    }, [])
+
+    // useEffect(() => {
+    //     const unsubscribe = onAuthStateChanged(auth, (user) => {
+    //         if (user) {
+    //             checkUserExist(user.uid)
+    //             .then((result) => {
+    //                 if (!result) {
+    //                     console.log("User doesn't exists saving");
+    //                     saveUser(user);
+    //                 }
+    //             });
+    //             setCurrentUser(user);
+    //         }
+    //     });
+
+    //     return () => {
+    //         unsubscribe();
+    //     };
+    // }, []);
 
 
     return (
         <AuthContext.Provider
             value={{
                 user: currentUser,
+                IsLoggedIn,
                 loaded
             }}
         >

@@ -1,3 +1,4 @@
+import { User } from "firebase/auth";
 import {Socket} from "socket.io-client";
 export interface UseRecordingContext {
     what: string
@@ -11,7 +12,14 @@ export type SocketContextData = {
     setConnection: (arg0: Socket) => void,
     setNamespace: (arg0: string) => void,
     connectionStatus: ConnectionStatus,
-    createConnection: (namespace: string) => void
+    createConnection: (namespace: string) => void,
+    emitOnJoin: boolean
 }
 
 export type SocketContext = React.Context<SocketContextData>
+
+
+export type IsLoggedInFunctionResult = {
+    result: boolean,
+    user: User | null
+}

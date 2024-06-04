@@ -6,7 +6,7 @@ import { useCallManager } from '../hooks/CallManager';
 
 const VideoPage = () => {
 
-  const { user, loaded } = useAuth();
+  const { user, IsLoggedIn, loaded } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const {connection, setNamespace, connectionStatus, createConnection} = useSocket();
@@ -14,11 +14,11 @@ const VideoPage = () => {
   const { createCallOffer } = useCallManager();
 
   useEffect(() => {
-    console.log({loaded, user})
-    if (loaded && !user) {
-      navigate("/authenticate");
-    }
-
+    IsLoggedIn().then(({ result, user }) => {
+      if (loaded && !user) {
+        navigate("/authenticate");
+      }
+    })
     if (!id) {
       navigate("/");
     }
@@ -34,15 +34,17 @@ const VideoPage = () => {
 
 
   useEffect(() => {
+    if(!connection) return;
     connection.on("on-join", ({ username }) => {
+      console.log(username);
       createCallOffer();
     });
-  }, [connection])
+  }, [connection, createCallOffer]);
 
   return (
     <div style={{ color: 'white' }}>
 
-
+    {connectionStatus}
     </div>
   )
 }
