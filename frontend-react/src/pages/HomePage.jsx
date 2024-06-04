@@ -7,12 +7,14 @@ import twitterIcon from "../components/icon/twitter.png";
 import lightIcon from "../components/icon/lighttt.png";
 import darkIcon from "../components/icon/dark.png";
 import { useAuth } from "../contexts/AuthContext";
+import { useSocket } from "../contexts/SocketContext";
 
 const HomePage = () => {
   const [input, setInput] = useState("");
   const [theme, setTheme] = useState("light");
   const navigate = useNavigate();
   const { loaded, user } = useAuth();
+  const { setEmitOnJoin } = useSocket();
 
   useEffect(() => {
     console.log(loaded, user)
@@ -23,6 +25,7 @@ const HomePage = () => {
 
   const submitHandler = () => {
     if (input.trim()) {
+      setEmitOnJoin(false);
       navigate(`/room/${input}`);
     } else {
       alert("please enter your name");

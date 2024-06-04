@@ -18,92 +18,141 @@ const peerConnection = new RTCPeerConnection({
     iceCandidatePoolSize: 10
 });
 
+window.peerConnection = peerConnection;
+
 export function useCallManager() {
+    /**
+     * @type{[RTCPeerConnection, (s: RTCPeerConnection) => void]}
+     */
+    const [RTCConnection, setRTCConnection] = useState(null);
+
+    /**
+     * @type{[RTCIceCandidate[], (c: RTCIceCandidate[]) => void]}
+     */
     const [icecandidates, setIceCandidates] =  useState([]);
 
     /**
-     * @type {[MediaStream, (s: MediaStream) => void]}
+     * @type {[MediaStream, (m: MediaStream) => void]}
      */
-    const [localStream, setLocalStream] = useState(null);
-
+    const [localStream, setLocalStream] = useState(null)
     /**
-     * @type {[ MediaStream, (s: MediaStream) => void]}
+     * @type {[MediaStream, (m: MediaStream) => void]}
      */
-    const [remoteStream, setRemoteStream] = useState(null);
+    const [remoteStream, setRemoteStream] = useState(null)
     
     const { connection } = useSocket();
 
     useEffect(() => {
-        navigator.mediaDevices.getUserMedia({
-            video: true
-        }).then((stream) => {
-            stream.getTracks().forEach((track) => {
-                peerConnection.addTrack(track);
-            });
-            setLocalStream(stream);
+        const peerConnection = new RTCPeerConnection({
+            iceServers: iceConfigurations.iceServers,
+            iceCandidatePoolSize: 10
         })
-    }, [localStream]);
-
-    async function createCallOffer() {
-        const offer =  await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        connection.emit("call-user", { offer });
-    }
-
-    async function answerCall({ offer }) {
-        const sdp = new RTCSessionDescription(offer);
-        await peerConnection.setRemoteDescription(sdp);
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        connection.emit("answer-user", { answer });
-    }
+        window.peerConnection = peerConnection;
+        setRTCConnection(peerConnection)
+    },[])
 
     useEffect(() => {
-        if (!connection) return;
-        connection.on("ice-candidate", addIceCandidate);
-        connection.on("call-offer", answerCall);
+        if (!connection && !RTCConnection) return;
+        connection.on("recv-user-details", ({ username }) => {
+            console.log("Other User Name: ", username);
+        })
+
+        connection.on("call-offer", async ({ offer }) => {
+            console.log("Offer Received: ",offer);
+            const remoteOffer = new RTCSessionDescription(offer);
+            await RTCConnection.setRemoteDescription(remoteOffer);
+
+            const localDescription = await RTCConnection.createAnswer();
+            await RTCConnection.setLocalDescription(localDescription);
+
+            connection.emit("answer-user", { answer: localDescription });
+        })
+
+        connection.on("ice-candidate", async ({ candidate }) => {
+            if (candidate) {
+                console.log("Ice candidate from other user", candidate);
+                const c = new RTCIceCandidate(candidate);
+                await RTCConnection.addIceCandidate(c);
+            }
+        })
+
         connection.on("on-answer", async ({ answer }) => {
-            const answerSDP = new RTCSessionDescription(answer);
-            await peerConnection.setRemoteDescription(answerSDP);
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: true
+            })
+            stream.getTracks().forEach((track) => {
+                console.log("Adding Tracks")
+                RTCConnection.addTrack(track);
+            });
+            const remoteDescription = new RTCSessionDescription(answer);
+            console.log("Answer Received: ", answer);
+            await RTCConnection.setRemoteDescription(remoteDescription);
         })
 
         return () => {
-            connection.off("ice-candidate")
-            connection.off("call-offer")
-            connection.off("on-answer")
+            connection.off("recv-user-details");
+            connection.off("call-offer");
+            connection.off("ice-candidate");
+            connection.off("on-answer");
         }
-    }, [connection])
 
-    useEffect(() => {
-        peerConnection.ontrack = ev => {
-            setRemoteStream(ev.streams[0]);
-        }
-    }, [])
+    }, [connection, RTCConnection])
 
-    async function addIceCandidate(candidateString) {
-        const candidate = new RTCIceCandidate(candidateString);
-        if (icecandidates.length > 0) {
-            icecandidates.forEach(async (c) => await peerConnection.addIceCandidate(c));
-        }
-        await peerConnection.addIceCandidate(candidate);
+    async function createCallOffer() {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: true
+        })
+        stream.getTracks().forEach((track) => {
+            console.log("Adding Tracks")
+            RTCConnection.addTrack(track);
+        });
+        setLocalStream(stream);
+        const localDescription = await RTCConnection.createOffer();
+        await RTCConnection.setLocalDescription(localDescription);
+        console.log(localDescription);
+        connection.emit("call-user", { offer: localDescription });
     }
 
+
     useEffect(() => {
-        if (!peerConnection) return;
-        peerConnection.onicecandidate = (ev) => {
-            if (peerConnection.localDescription && !peerConnection.remoteDescription) {
-                setIceCandidates([...icecandidates, ev.candidate]);
-                return;
-            }
-            console.log("Received Ice Candidate", ev.candidate);
+        if (!RTCConnection) return;
+    
+        RTCConnection.onicecandidate = async (ev) => {
+            console.log(ev.candidate);
             if (!ev.candidate) return;
-            peerConnection.addIceCandidate(ev.candidate);
+            if (!RTCConnection.remoteDescription) {
+                console.log(icecandidates);
+                setIceCandidates([...icecandidates, ev.candidate]);
+            } else {   
+                await RTCConnection.addIceCandidate(ev.candidate);
+            }
+            connection.emit("send-ice-candidate", { candidate: ev.candidate.toJSON() });
         }
+    
+        console.log("Listening for tracks");
+        RTCConnection.ontrack = (ev) => {
+            console.log(ev, "Track event occurred");
+            const remoteStream = new MediaStream();
+            if (ev.streams.length > 0) {
+                ev.streams[0].getTracks().forEach((track) => {
+                    console.log(track);
+                    remoteStream.addTrack(track);
+                });
+                setRemoteStream(remoteStream); 
+            }
+        };
 
-        peerConnection.onnegotiationneeded = (ev) => {
-            console.log("negotiation is needed");
+        RTCConnection.onnegotiationneeded =async (ev) => {
+            console.log(ev, "Negotiation Needed")
         }
-    }, [])
+    
+        return () => {
+            RTCConnection.onicecandidate = null;
+            RTCConnection.ontrack = null;
+        };
+    }, [RTCConnection, icecandidates]);
 
-    return { peerConnection, createCallOffer, answerCall, addIceCandidate };
+    
+
+    return { peerConnection: RTCConnection, createCallOffer, localStream, remoteStream };
 }

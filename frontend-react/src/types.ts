@@ -13,7 +13,8 @@ export type SocketContextData = {
     setNamespace: (arg0: string) => void,
     connectionStatus: ConnectionStatus,
     createConnection: (namespace: string) => void,
-    emitOnJoin: boolean
+    emitOnJoin: boolean,
+    setEmitOnJoin: (s: boolean) => void
 }
 
 export type SocketContext = React.Context<SocketContextData>

@@ -2,7 +2,6 @@ import { GoogleAuthProvider, onAuthStateChanged, signInWithRedirect } from "fire
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, firestore } from "../firebase.config";
 import { collection, doc, getDocs, query, setDoc, where } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
 
 /**
  * @typedef { React.Context<{ user: import("firebase/auth").User | null, loaded: boolean, IsLoggedIn: () => Promise<import("../types").IsLoggedInFunctionResult> }> } AuthContextObject
@@ -26,7 +25,7 @@ async function checkUserExist(uid) {
         // const usersRef = collection(firestore, "users");
 
         const snapshot = await getDocs(query(collection(firestore, "users"), where("uid", "==", uid)));
-        if (snapshot.docs.length < 0) {
+        if (snapshot.docs.length <= 0) {
             return false;
         }
     } catch(error) {
@@ -58,9 +57,17 @@ async function saveUser(user) {
 export function authenticateUser() {
     const googleAuthProvider = new GoogleAuthProvider();
     signInWithRedirect(auth, googleAuthProvider)
-        .then(() => {
-            const user = auth.currentUser;
-            console.log(user);
+        .then(async () => {
+            const unsubscribe = onAuthStateChanged((auth, (user) => {
+                checkUserExist(user.uid).then(exists => {
+                    if (!exists) {
+                        saveUser(user);
+                        unsubscribe();
+                    }
+                })
+
+            }))
+
         }).catch((reason) => {
             alert(reason);
         })

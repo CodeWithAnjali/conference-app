@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { io, Manager } from "socket.io-client";
+import { io } from "socket.io-client";
+import { useAuth } from "./AuthContext";
 
 /**
  * @type {import("../types").SocketContext}
@@ -10,6 +11,8 @@ const SocketIOContext = createContext({
   setConnection: null,
   setNamespace: null,
   createConnection: null,
+  emitOnJoin: true,
+  setEmitOnJoin: null
 });
 
 
@@ -18,16 +21,18 @@ export function useSocket() {
 }
 
 export function SocketProvider({ children }) {
+
   /**
    * @type {[import("socket.io-client").Socket, (arg0: Socket | null) => void] }
    */
   const [connection, setConnection] = useState(null);
   const [namespace, setNamespace] = useState("");
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
+  const [emitOnJoin, setEmitOnJoin] = useState(true);
 
   /**
    * @param {string} namespace
-   * @returns {Socket}
+   * @returns {import("socket.io-client").Socket}
    */
   function createConnection(namespace) {
     console.log(namespace);
@@ -63,6 +68,8 @@ export function SocketProvider({ children }) {
         setNamespace,
         createConnection,
         connectionStatus,
+        emitOnJoin,
+        setEmitOnJoin: setEmitOnJoin
       }}
     >
       {children}
