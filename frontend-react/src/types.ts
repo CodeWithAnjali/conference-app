@@ -4,7 +4,7 @@ export interface UseRecordingContext {
     what: string
 }
 
-type ConnectionStatus = "connected" | "disconnected"
+export type ConnectionStatus = "connected" | "disconnected"
 
 export type SocketContextData = {
     namespace: string | null,
@@ -24,3 +24,16 @@ export type IsLoggedInFunctionResult = {
     result: boolean,
     user: User | null
 }
+
+export type TranscriptionUIProps = {
+    otherContent: string,
+    selfContent: string
+}
+
+export type VideoUIProps = {
+    label: string,
+    stream: MediaStream |null
+}
+
+export type UseRTCProps = { uid: string, username: string, roomId: string};
+

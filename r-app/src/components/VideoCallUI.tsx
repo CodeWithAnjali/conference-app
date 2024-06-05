@@ -1,11 +1,12 @@
+import "./VideoCallUI.css";
 import VideoUI from "./VideoUI";
 
-/**
- * 
- * @param {VideoCallUIProps} param0 
- * @returns 
- */
-export default function VideoCallUI({ localStream, remoteStream }) {
+type VideoCallUIProps = {
+  localStream: MediaStream | null;
+  remoteStream: MediaStream | null;
+};
+
+export default function VideoCallUI({ localStream, remoteStream }: VideoCallUIProps) {
 
   return (
     <div className="video-call-container">

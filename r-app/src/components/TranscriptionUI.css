@@ -1,0 +1,22 @@
+.transcription-container {
+    position: absolute;
+    bottom: 100px;
+    z-index: 1000;
+    left: 20%;
+    color: white;
+
+    p {
+        padding: 12px 16px;
+        background: black;
+        margin-bottom: 8px;
+        border-radius: 8px;
+    }
+
+    p.self {
+        background: rgb(62, 73, 62);
+    }
+
+    p.other {
+        background: rgb(48, 39, 39);
+    }
+}

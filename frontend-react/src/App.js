@@ -1,10 +1,10 @@
 import "./App.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import HomePage from "./pages/HomePage";
-import VideoPage from "./pages/VideoPage";
 import AuthenticatePage from "./pages/AuthPage";
 import { AuthProvider } from "./contexts/AuthContext";
-import { SocketProvider } from "./contexts/SocketContext";
+import VideoCallPage from "./pages/VideoCallPage";
+import JoinRoomPage from "./pages/JoinRoomPage";
 
 function App() {
   const router = createBrowserRouter([
@@ -18,17 +18,19 @@ function App() {
     },
     {
       path: "/room/:id",
-      element: <VideoPage />,
-    },
+      Component: VideoCallPage,
+    }, 
+    {
+      path: "/room/join/:id",
+      Component: JoinRoomPage
+    }
   ]);
 
   return (
     <AuthProvider>
-      <SocketProvider>
-        <div className="App">
-          <RouterProvider router={router} />
-        </div>
-      </SocketProvider>
+      <div className="App">
+        <RouterProvider router={router} />
+      </div>
     </AuthProvider>
   );
 }
