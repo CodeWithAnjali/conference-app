@@ -8,16 +8,24 @@ import { useNavigate, useParams } from "react-router-dom";
 import { v4 } from "uuid";
 
 
+
+
 const iceConfigurations: RTCConfiguration = {
-    iceServers: [
-        {
-            urls: [
-                "stun:stun1.l.google.com:19302",
-                "stun:stun2.l.google.com:19302",
-            ],
-        },
-    ],
+  iceServers: [
+      {
+        urls: [
+            "stun:stun1.l.google.com:19302",
+            "stun:stun2.l.google.com:19302",
+        ],
+      },
+      {
+          urls: "turns:kubernetes.glxymesh.com:5349",
+          username: "abhishek",
+          credential: "1234567"
+      }
+  ]
 };
+
 
 function useRTC({ uid, username, roomId }: UseRTCProps) {
   const [peerConnection, setPeerConnection] = useState<RTCPeerConnection|null>(null);
@@ -40,8 +48,9 @@ function useRTC({ uid, username, roomId }: UseRTCProps) {
 
     pc.onicecandidate = (ev) => {
       const candidate = ev.candidate;
-      console.log("Local Ice Candidate Added")
+      console.log("Local Ice Candidate Added", candidate)
       if (!candidate) return;
+      console.log("Emitting Joined Ice Candidate");
       connection.emit("joined-ice-candidate", { icecandidate: candidate.toJSON(), roomId });
       if (pc.localDescription && !pc.remoteDescription) {
         setIcecandidates([...icecandidates, candidate]);
@@ -73,6 +82,7 @@ function useRTC({ uid, username, roomId }: UseRTCProps) {
     });
 
     stream.getTracks().forEach(track => {
+      console.log(track)
       peerConnection.addTrack(track, stream);
     });
 
@@ -99,8 +109,8 @@ function useRTC({ uid, username, roomId }: UseRTCProps) {
   }
 
   useEffect(() => {
-    if (connectionStatus !== "connected") return;
     connection.on("recv-ice-candidate", async ({candidate}: { candidate: RTCIceCandidateInit}) => {
+      console.log("Receve Event in candidate", candidate)
       if (!peerConnection) {
         console.log("Peer Connection Not Found");
         return;
@@ -166,6 +176,10 @@ function CallComponent({ uid, roomId, username }: { uid: string, roomId: string,
     }
 }, []);
 
+useEffect(() => {
+  console.log(localStream, remoteStream);
+}, [localStream, remoteStream])
+
   return (
     <div className='video-call-page'>
         <VideoCallUI  localStream={localStream} remoteStream={remoteStream}  />
@@ -189,7 +203,6 @@ export default function JoinRoomPage() {
         return;
     }
     
-
     useEffect(() => {
       console.log(username, selfUID)
     }, [username, selfUID])
@@ -198,17 +211,17 @@ export default function JoinRoomPage() {
       console.log(username);
       return <CallComponent roomId={id} username={username} uid={selfUID} />
     } else {
-      return <div className='video-call-page'>
+      return <div style={{ width: "100%", height: "100vh", background: "grey", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ width: "600px", height: "400px"}}>
-          <form onSubmit={async (e) => {
+          <form style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"}} onSubmit={async (e) => {
             e.preventDefault();
             setUsername(userNameInput)
             setUserNameInput("");
             const userID = v4();
             setselfUID(userID);
           }}>
-            <input type="text" placeholder='Enter your name' value={userNameInput} onChange={(e) => setUserNameInput(e.target.value)} />
-            <button className="create-conference-btn">Create Conference Room</button>
+            <input style={{ width: "360px", height: "60px", fontSize: "1.2rem", padding: "16px"}} type="text" placeholder='Enter your name' value={userNameInput} onChange={(e) => setUserNameInput(e.target.value)} />
+            <button className="create-conference-btn">Join Call</button>
           </form>
         </div>
       </div>

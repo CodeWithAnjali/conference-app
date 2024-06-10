@@ -6,5 +6,7 @@
     justify-content: center;
     gap: 20px;
     background: #211f1f;
+    flex-wrap: wrap;
+    min-height: 100vh;
 }
 

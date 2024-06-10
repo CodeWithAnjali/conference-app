@@ -36,7 +36,7 @@ const HomePage = () => {
 
   async function getRoomID() {
     const userID = v4();
-    const body = JSON.stringify({ uid: userID });
+    const body = JSON.stringify({ uid: userID, username: usernameInput });
     console.log(body);
     const response = await fetch("https://kubernetes.glxymesh.com/create-room", {
         method: "POST",
@@ -49,7 +49,7 @@ const HomePage = () => {
     const { roomId }: { roomId: string } = await response.json();
     setUserName!(usernameInput);
     setRoomId!(roomId);
-    setConferenceURL("https://conferencing-99719.web.app/room/join/"+roomId);
+    setConferenceURL("https://ai-chat-745be.web.app/room/join/"+roomId);
     setContextUID!(userID);
     setJoining!(false);
   }

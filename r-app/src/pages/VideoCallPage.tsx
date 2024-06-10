@@ -10,12 +10,17 @@ import { useSocketIO } from '../hooks/socektIOHook';
 const iceConfigurations: RTCConfiguration = {
   iceServers: [
       {
-          urls: [
-              "stun:stun1.l.google.com:19302",
-              "stun:stun2.l.google.com:19302",
-          ],
+        urls: [
+            "stun:stun1.l.google.com:19302",
+            "stun:stun2.l.google.com:19302",
+        ],
       },
-  ],
+      {
+          urls: "turns:kubernetes.glxymesh.com:5349",
+          username: "abhishek",
+          credential: "1234567"
+      }
+  ]
 };
 
 type UseRTCProps = { uid: string, username: string, roomId: string, joining: boolean}
@@ -26,6 +31,7 @@ function useRTC({ uid, username }: UseRTCProps) {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const { connection, connectionStatus } = useSocketIO("https://kubernetes.glxymesh.com");
   const [icecandidates, setIcecandidates] = useState<RTCIceCandidate[]>([]);
+  const [remoteIceCandidates, setRemoteIceCandidates] = useState<RTCIceCandidate[]>([]);
   const [otherPersonUID, setOtherPersonUID] = useState("");
 
 
@@ -43,18 +49,7 @@ function useRTC({ uid, username }: UseRTCProps) {
       setRemoteStream(remoteStream);
     }
 
-    pc.onicecandidate = (ev) => {
-      const candidate = ev.candidate;
-      if (!candidate) return;
-      if (pc.localDescription && !pc.remoteDescription) {
-        setIcecandidates([...icecandidates, candidate]);
-        return;
-      }
-      pc.addIceCandidate(candidate);
-      console.log("Local Ice Candidate Added")
-
-      connection.emit("creator-ice-candidate", { candidate: candidate.toJSON(), otherUID: otherPersonUID });
-    }
+    
 
     pc.onnegotiationneeded = (ev) => {
       console.log("Negotiation is needed", ev);
@@ -63,6 +58,23 @@ function useRTC({ uid, username }: UseRTCProps) {
     setPeerConnection(pc);
   }, [])
 
+  useEffect(() => {
+    if (!peerConnection) return;
+    peerConnection.onicecandidate = (ev) => {
+      const candidate = ev.candidate;
+      if (!candidate) return;
+      if (peerConnection.localDescription && !peerConnection.remoteDescription) {
+        setIcecandidates([...icecandidates, candidate]);
+        return;
+      }
+      console.log(candidate);
+      peerConnection.addIceCandidate(candidate);
+      console.log("Local Ice Candidate Added");
+
+      connection.emit("creator-ice-candidate", { icecandidate: candidate.toJSON(), otherUID: otherPersonUID });
+    }
+  }, [peerConnection, otherPersonUID])
+
   async function addLocalStream() {
     if (!peerConnection) return;
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -70,6 +82,7 @@ function useRTC({ uid, username }: UseRTCProps) {
       audio: true
     });
     stream.getTracks().forEach(track => {
+      console.log(track)
       peerConnection.addTrack(track, stream);
     });
     setLocalStream(stream);
@@ -86,11 +99,15 @@ function useRTC({ uid, username }: UseRTCProps) {
   }, [connectionStatus])
 
   useEffect(() => {
+    console.log({ otherPersonUID })
+  }, [otherPersonUID])
+
+  useEffect(() => {
     if (connectionStatus !== "connected") return;
     console.log("Listening socketIO Events");
     connection.on("call-offer", async ({ offer, otherUID }) => {
       setOtherPersonUID(otherUID);
-      console.log("Call Offer Received", otherPersonUID, otherUID);
+      console.log({ otherUID, otherPersonUID });
       if (!peerConnection) {
         console.log("Peer Connection Not Found on Call Offer")
         return;
@@ -109,9 +126,22 @@ function useRTC({ uid, username }: UseRTCProps) {
         console.log("Peer Connection Not Found");
         return;
       }
-      console.log("Remote Ice Candidate Added")
-      await peerConnection.addIceCandidate(candidate);
-      console.log("Ice Candidate Added");
+      
+      console.log(candidate)
+      const icObj = new RTCIceCandidate(candidate);
+      if (!peerConnection.remoteDescription) {
+        setRemoteIceCandidates([...remoteIceCandidates, icObj]);
+        console.log("Added to Remote Ice candidate State")
+      } else {
+        console.log("Remote Ice Candidate Added");
+        if (remoteIceCandidates.length > 0) {
+          for (let remoteCandidate of remoteIceCandidates) {
+            await peerConnection.addIceCandidate(remoteCandidate)
+          }
+        }
+        await peerConnection.addIceCandidate(icObj);
+        console.log("Ice Candidate Added");
+      }
     })
   }, [connectionStatus]);
 

@@ -10,8 +10,8 @@ export default function VideoCallUI({ localStream, remoteStream }: VideoCallUIPr
 
   return (
     <div className="video-call-container">
-      <VideoUI stream={localStream} label="Abhishek Mourya" />
-      <VideoUI stream={remoteStream} label="Naron" />
+      <VideoUI stream={localStream} muted={true} label="Abhishek Mourya" />
+      <VideoUI stream={remoteStream} muted={false} label="Naron" />
     </div>
   );
 }

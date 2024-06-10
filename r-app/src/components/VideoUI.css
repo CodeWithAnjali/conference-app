@@ -1,5 +1,6 @@
 .video-c {
-    width: 640px;
+    max-width: calc(100% - 40px);
+    margin: auto;
     height: 480px;
     position: relative;
     overflow: hidden;
