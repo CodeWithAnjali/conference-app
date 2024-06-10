@@ -5,13 +5,13 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDxdc-KCrxwAp_uerl7shHNkzfm7aQL1zc",
-  authDomain: "conferencing-99719.firebaseapp.com",
-  projectId: "conferencing-99719",
-  storageBucket: "conferencing-99719.appspot.com",
-  messagingSenderId: "89724815493",
-  appId: "1:89724815493:web:ae59be7ad9b2f8d26b01ec",
-  measurementId: "G-CHQLNQ2FP1"
+  apiKey: "API_KEY",
+  authDomain: "ADMIN_DOMAIN",
+  projectId: "PROJECT_ID",
+  storageBucket: "STORAGE_BUCKET_ID",
+  messagingSenderId: "MESSAGINGSENDERID",
+  appId: "APP_ID",
+  measurementId: "MEASUREMENT_ID"
 };
 
 export const app = initializeApp(firebaseConfig);
